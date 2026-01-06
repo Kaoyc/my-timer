@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>服務計時器 - 手機優化版</title>
+    <title>服務監控 - 極簡進度版</title>
     <style>
         :root {
-            --primary: #92b4d4;
-            --success: #a2d5ab;
-            --warning: #f3cf7a;
-            --danger: #e59a9a;
+            --primary: #92b4d4;    /* 柔和藍 - 完成進度 */
+            --success: #a2d5ab;    /* 鼠尾草綠 */
+            --warning: #f3cf7a;    /* 奶油黃 */
+            --danger: #e59a9a;     /* 柔霧粉 - 時間刻度與落後 */
             --bg: #fdfbf7;
             --dark: #556067;
             --timer-bg: #f1f3f5;
+            --bar-bg: #e9ecef;
         }
 
         body {
@@ -31,157 +32,79 @@
             max-width: 450px;
             padding: 1.2rem;
             border-radius: 30px;
-            box-shadow: 0 10px 40px rgba(146, 180, 212, 0.1);
+            box-shadow: 0 10px 40px rgba(146,180,212,0.1);
         }
 
         h2 { text-align: center; margin: 0 0 15px 0; font-size: 1.2rem; letter-spacing: 1px; }
 
         .settings-card {
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #f0f0f0;
+            background: #ffffff; padding: 15px; border-radius: 20px;
+            margin-bottom: 15px; border: 1px solid #f0f0f0;
         }
 
-        /* 調整對齊邏輯 */
-        .settings-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            align-items: flex-end; /* 底部對齊 */
-        }
+        .settings-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; }
+        .input-item { display: flex; flex-direction: column; flex: 1; }
+        .item-people { flex: 0 0 70px; } 
 
-        .input-item { 
-            display: flex; 
-            flex-direction: column; 
-            flex: 1; 
-        }
+        label { font-size: 0.7rem; color: #a0aab0; margin-bottom: 5px; font-weight: bold; }
         
-        .item-people { flex: 0 0 70px; } /* 固定人數寬度 */
-
-        label { 
-            font-size: 0.7rem; 
-            color: #a0aab0; 
-            margin-bottom: 5px; 
-            font-weight: bold; 
-            white-space: nowrap;
-        }
-        
-        /* 強制所有框框高度一致 */
         input, select {
-            width: 100%;
-            height: 42px; /* 固定高度 */
-            padding: 0 8px;
-            border: 1.5px solid #eee;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            background: #fafafa;
-            color: var(--dark);
-            box-sizing: border-box;
-            outline: none;
-            /* 移除手機預設陰影與高度加成 */
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
+            width: 100%; height: 42px; padding: 0 8px;
+            border: 1.5px solid #eee; border-radius: 10px;
+            font-size: 0.9rem; background: #fafafa;
+            color: var(--dark); box-sizing: border-box; outline: none;
+            -webkit-appearance: none; appearance: none;
         }
 
-        /* 針對時間框微調 */
-        input[type="time"] {
-            display: flex;
-            align-items: center;
-            line-height: 42px; /* 與高度相同 */
+        /* 總進度區塊 */
+        .overall-section { margin-bottom: 25px; }
+        .overall-header { display: flex; justify-content: flex-end; margin-bottom: 8px; height: 18px; }
+        #overallStatus { font-size: 0.8rem; color: var(--primary); font-weight: bold; }
+
+        .overall-progress-container {
+            width: 100%; height: 12px; background: var(--bar-bg);
+            border-radius: 6px; position: relative; overflow: visible;
+        }
+        /* 藍色長條：代表人數完成進度 */
+        #peopleProgressBar { 
+            width: 0%; height: 100%; background: var(--primary); 
+            border-radius: 6px; transition: width 0.5s ease-out; 
+        }
+        /* 紅色刻度線：代表時間流逝進度 */
+        #timeMarker {
+            position: absolute; top: -3px; bottom: -3px; width: 3px;
+            background: var(--danger); left: 0%; transition: left 0.5s linear;
+            box-shadow: 0 0 4px rgba(229,154,154,0.4);
+            z-index: 2;
         }
 
-        input:focus, select:focus { border-color: var(--primary); }
-
-        .target-info {
-            font-size: 0.85rem;
-            color: #7a8d99;
-            text-align: center;
-            padding: 10px;
-            background: #f8fbfd;
-            border-radius: 12px;
-            border: 1px solid #edf2f5;
+        /* 回合碼表區 */
+        .timer-card {
+            position: relative; width: 100%; background: var(--timer-bg);
+            border-radius: 25px; margin-bottom: 20px; overflow: hidden;
+            height: 110px; display: flex; align-items: center; justify-content: center;
         }
-
-        .display {
-            font-size: 3.8rem;
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            font-weight: 600;
-            margin: 15px 0;
-            background: var(--timer-bg);
-            color: var(--dark);
-            padding: 25px 5px;
-            border-radius: 25px;
-            overflow: hidden;
+        #roundBackgroundBar {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+            background-color: var(--success); opacity: 0.35;
+            transition: width 0.1s linear, background-color 0.3s ease;
         }
+        .display { position: relative; font-size: 3.8rem; font-family: 'Courier New', monospace; font-weight: 600; z-index: 1; }
 
-        .main-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        button {
-            padding: 16px;
-            font-size: 1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 18px;
-            cursor: pointer;
-            transition: all 0.2s;
-            touch-action: manipulation;
-        }
-
-        button:active { transform: scale(0.96); opacity: 0.9; }
-        button:disabled { background-color: #f0f0f0 !important; color: #ccc !important; }
-
+        .main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        button { padding: 16px; font-size: 1rem; font-weight: bold; border: none; border-radius: 18px; cursor: pointer; touch-action: manipulation; }
         #startBtn { background: var(--success); color: white; }
         #lapBtn { background: var(--primary); color: white; }
+        button:disabled { background-color: #f0f0f0 !important; color: #ccc !important; }
 
-        .laps-container {
-            max-height: 250px;
-            overflow-y: auto;
-            border-top: 1px solid #f5f5f5;
-        }
-
-        .lap-item {
-            padding: 12px 5px;
-            border-bottom: 1px solid #fafafa;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .lap-left { flex: 1; }
-        .lap-no { font-size: 0.7rem; color: #c0c8cc; }
+        .laps-container { max-height: 180px; overflow-y: auto; border-top: 1px solid #f5f5f5; }
+        .lap-item { padding: 10px 5px; border-bottom: 1px solid #fafafa; display: flex; justify-content: space-between; align-items: center; }
         .lap-dur { font-weight: bold; font-size: 1.1rem; color: #66737c; }
-        
-        .lap-right { text-align: right; flex: 1.5; }
-        .diff-text { font-size: 0.8rem; margin-bottom: 2px; }
+        .diff-text { font-size: 0.8rem; }
         .faster { color: #8ebfa3; font-weight: bold; }
         .slower { color: #d9ad82; }
-        
-        .praise-text { font-size: 0.75rem; font-weight: bold; opacity: 0.8; }
-        .praise-success { color: #8ebfa3; }
-        .praise-cheer { color: #b0b8bc; }
 
-        .danger-zone {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        #resetBtn {
-            background: none;
-            color: #d0d7db;
-            font-size: 0.8rem;
-            border: none;
-            cursor: pointer;
-            text-decoration: underline;
-        }
+        #resetBtn { background: none; color: #d0d7db; font-size: 0.8rem; border: none; cursor: pointer; text-decoration: underline; margin-top: 15px; width: 100%; }
     </style>
 </head>
 <body>
@@ -193,7 +116,7 @@
         <div class="settings-row">
             <div class="input-item item-people">
                 <label>人數</label>
-                <input type="number" id="peopleCount" value="5" min="1" inputmode="numeric">
+                <input type="number" id="peopleCount" value="10" min="1" inputmode="numeric">
             </div>
             <div class="input-item">
                 <label>結束快選</label>
@@ -204,34 +127,48 @@
                 <input type="time" id="endTimeCustom">
             </div>
         </div>
-        <div id="targetDisplay" class="target-info">設定目標以開始</div>
     </div>
 
-    <div id="display" class="display">00:00.00</div>
+    <!-- 總進度對照區 -->
+    <div class="overall-section">
+        <div class="overall-header">
+            <span id="overallStatus">待機中</span>
+        </div>
+        <div class="overall-progress-container">
+            <div id="peopleProgressBar"></div>
+            <div id="timeMarker"></div>
+        </div>
+    </div>
+
+    <!-- 回合碼表 -->
+    <div class="timer-card">
+        <div id="roundBackgroundBar"></div>
+        <div id="display" class="display">00:00.00</div>
+    </div>
 
     <div class="main-controls">
-        <button id="startBtn">開始計時</button>
+        <button id="startBtn">開始服務</button>
         <button id="lapBtn" disabled>完成一人</button>
     </div>
 
     <div id="laps" class="laps-container"></div>
-
-    <div class="danger-zone">
-        <button id="resetBtn">重設數據與人數</button>
-    </div>
+    <button id="resetBtn">重設所有數據</button>
 </div>
 
 <script>
-    const praises = ["表現優異 ✨", "節奏很棒 🚀", "完美達標 🏆", "效率驚人 🌟", "做得好 💖"];
-    const cheers = ["品質優先 🌿", "找回節奏 💪", "下一位加油 🌈", "專注當下 👏"];
+    const praises = ["超前進度！🚀", "效率驚人 ✨", "節奏完美 🏆", "做得好 💖"];
+    const cheers = ["品質優先 🌿", "找回節奏 💪", "穩定發揮 👏", "下一位加油 🌈"];
 
-    let startTime, elapsedTime = 0, timerInterval, lapCount = 0, targetMsPerPerson = 0;
+    let sessionStartTime, currentRoundStartTime, elapsedTime = 0, timerInterval;
+    let lapCount = 0, targetMsPerPerson = 0, totalSessionDuration = 0, totalPeople = 0;
 
-    const display = document.getElementById('display'), startBtn = document.getElementById('startBtn'),
-          lapBtn = document.getElementById('lapBtn'), resetBtn = document.getElementById('resetBtn'),
-          lapsContainer = document.getElementById('laps'), peopleInput = document.getElementById('peopleCount'),
-          endTimeSelect = document.getElementById('endTimeSelect'), endTimeCustom = document.getElementById('endTimeCustom'),
-          targetDisplay = document.getElementById('targetDisplay');
+    const display = document.getElementById('display'), roundBar = document.getElementById('roundBackgroundBar'),
+          peopleProgressBar = document.getElementById('peopleProgressBar'), timeMarker = document.getElementById('timeMarker'),
+          overallStatus = document.getElementById('overallStatus'),
+          startBtn = document.getElementById('startBtn'), lapBtn = document.getElementById('lapBtn'),
+          resetBtn = document.getElementById('resetBtn'), lapsContainer = document.getElementById('laps'),
+          peopleInput = document.getElementById('peopleCount'), endTimeSelect = document.getElementById('endTimeSelect'),
+          endTimeCustom = document.getElementById('endTimeCustom');
 
     function init() {
         for (let i = 0; i < 24; i++) {
@@ -243,36 +180,68 @@
         const d = new Date(); d.setHours(d.getHours() + 1);
         const defaultT = `${d.getHours().toString().padStart(2, '0')}:00`;
         endTimeSelect.value = endTimeCustom.value = defaultT;
-        updateTarget();
     }
 
-    function updateTarget() {
-        const p = parseInt(peopleInput.value) || 1;
+    function calculateTarget() {
+        totalPeople = parseInt(peopleInput.value) || 1;
         const [h, m] = endTimeCustom.value.split(':');
         const targetD = new Date(); targetD.setHours(h, m, 0, 0);
         let diff = targetD - new Date();
-        if (diff < 0) { targetDisplay.innerHTML = "<span style='color:#e59a9a;'>⚠️ 時間已過</span>"; startBtn.disabled = true; return; }
-        startBtn.disabled = false;
-        targetMsPerPerson = diff / p;
-        targetDisplay.innerHTML = `每位目標：${formatTime(targetMsPerPerson)}`;
+        if (diff < 0) return 0;
+        targetMsPerPerson = diff / totalPeople;
+        return diff;
     }
 
     function formatTime(t) {
-        const mm = Math.floor(t / 60000);
-        const ss = Math.floor((t % 60000) / 1000);
-        const ms = Math.floor((t % 1000) / 10);
+        const mm = Math.floor(t / 60000), ss = Math.floor((t % 60000) / 1000), ms = Math.floor((t % 1000) / 10);
         return `${mm.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}.${ms.toString().padStart(2, "0")}`;
+    }
+
+    function updateVisuals() {
+        // 1. 回合背景
+        const roundPercent = (elapsedTime / targetMsPerPerson) * 100;
+        roundBar.style.width = Math.min(roundPercent, 100) + "%";
+        roundBar.style.backgroundColor = roundPercent >= 100 ? "var(--danger)" : (roundPercent >= 80 ? "var(--warning)" : "var(--success)");
+
+        // 2. 總進度對照
+        const totalElapsed = Date.now() - sessionStartTime;
+        const timePercent = (totalElapsed / totalSessionDuration) * 100;
+        const peoplePercent = (lapCount / totalPeople) * 100;
+
+        timeMarker.style.left = Math.min(timePercent, 100) + "%";
+        peopleProgressBar.style.width = Math.min(peoplePercent, 100) + "%";
+
+        // 3. 領先/落後邏輯
+        const expectedCount = Math.floor(totalElapsed / targetMsPerPerson);
+        const diffCount = lapCount - expectedCount;
+
+        if (diffCount > 0) {
+            overallStatus.innerText = `領先 ${diffCount} 人 🏆`;
+            overallStatus.style.color = "var(--success)";
+        } else if (diffCount < 0) {
+            overallStatus.innerText = `落後 ${Math.abs(diffCount)} 人 💪`;
+            overallStatus.style.color = "var(--danger)";
+        } else {
+            overallStatus.innerText = `準時 ⚖️`;
+            overallStatus.style.color = "var(--primary)";
+        }
     }
 
     startBtn.onclick = () => {
         if (startBtn.innerText === "暫停") {
-            clearInterval(timerInterval); startBtn.innerText = "繼續計時"; startBtn.style.backgroundColor = "var(--success)";
+            clearInterval(timerInterval); startBtn.innerText = "繼續"; startBtn.style.backgroundColor = "var(--success)";
         } else {
+            if (!sessionStartTime) {
+                totalSessionDuration = calculateTarget();
+                if (totalSessionDuration <= 0) { alert("結束時間無效！"); return; }
+                sessionStartTime = Date.now();
+            }
             peopleInput.disabled = endTimeSelect.disabled = endTimeCustom.disabled = true;
-            startTime = Date.now() - elapsedTime;
+            currentRoundStartTime = Date.now() - elapsedTime;
             timerInterval = setInterval(() => { 
-                elapsedTime = Date.now() - startTime; 
+                elapsedTime = Date.now() - currentRoundStartTime; 
                 display.innerText = formatTime(elapsedTime); 
+                updateVisuals();
             }, 10);
             startBtn.innerText = "暫停"; startBtn.style.backgroundColor = "var(--warning)"; lapBtn.disabled = false;
         }
@@ -281,8 +250,7 @@
     lapBtn.onclick = () => {
         lapCount++;
         const duration = elapsedTime;
-        const diff = duration - targetMsPerPerson;
-        const isFaster = diff <= 0;
+        const isFaster = duration <= targetMsPerPerson;
         const msg = isFaster ? praises[Math.floor(Math.random()*praises.length)] : cheers[Math.floor(Math.random()*cheers.length)];
         
         const item = document.createElement('div');
@@ -290,25 +258,26 @@
         item.innerHTML = `
             <div class="lap-left"><span class="lap-no">P ${lapCount}</span><br><span class="lap-dur">${formatTime(duration)}</span></div>
             <div class="lap-right">
-                <div class="diff-text ${isFaster?'faster':'slower'}">${isFaster?'領先':'遲於'} ${formatTime(Math.abs(diff))}</div>
-                <div class="praise-text ${isFaster?'praise-success':'praise-cheer'}">${msg}</div>
+                <div class="diff-text ${isFaster?'faster':'slower'}">${isFaster?'領先':'延遲'} ${formatTime(Math.abs(duration - targetMsPerPerson))}</div>
+                <div class="praise-text" style="color:${isFaster?'#8ebfa3':'#b0b8bc'}">${msg}</div>
             </div>`;
         lapsContainer.prepend(item); 
-        startTime = Date.now(); elapsedTime = 0;
+        currentRoundStartTime = Date.now(); elapsedTime = 0;
+        updateVisuals();
     };
 
     resetBtn.onclick = () => {
-        if (confirm("確定重設？紀錄將清除。")) {
-            clearInterval(timerInterval); elapsedTime = lapCount = 0;
+        if (confirm("確定重設嗎？紀錄將清空。")) {
+            clearInterval(timerInterval); elapsedTime = lapCount = 0; sessionStartTime = null;
             display.innerText = "00:00.00"; lapsContainer.innerHTML = '';
-            startBtn.innerText = "開始計時"; startBtn.style.backgroundColor = "var(--success)";
+            peopleProgressBar.style.width = "0%"; timeMarker.style.left = "0%";
+            overallStatus.innerText = "待機中";
+            startBtn.innerText = "開始服務"; startBtn.style.backgroundColor = "var(--success)";
             lapBtn.disabled = true; peopleInput.disabled = endTimeSelect.disabled = endTimeCustom.disabled = false;
-            updateTarget();
         }
     };
 
-    endTimeSelect.onchange = () => { endTimeCustom.value = endTimeSelect.value; updateTarget(); };
-    [peopleInput, endTimeCustom].forEach(el => el.oninput = updateTarget);
+    endTimeSelect.onchange = () => { endTimeCustom.value = endTimeSelect.value; };
     init();
 </script>
 
