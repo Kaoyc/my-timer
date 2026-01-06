@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>服務計時器 - 獨立循環版</title>
+    <title>服務計時器 - 手機優化版</title>
     <style>
         :root {
-            --primary: #92b4d4;    /* 柔和藍 */
-            --success: #a2d5ab;    /* 鼠尾草綠 */
-            --warning: #f3cf7a;    /* 奶油黃 */
-            --danger: #e59a9a;     /* 柔霧粉 */
-            --bg: #fdfbf7;         /* 暖奶油白 */
-            --dark: #556067;       /* 灰岩色 */
-            --timer-bg: #f1f3f5;   /* 淺淺灰 */
+            --primary: #92b4d4;
+            --success: #a2d5ab;
+            --warning: #f3cf7a;
+            --danger: #e59a9a;
+            --bg: #fdfbf7;
+            --dark: #556067;
+            --timer-bg: #f1f3f5;
         }
 
         body {
@@ -20,7 +20,7 @@
             background-color: var(--bg);
             display: flex;
             justify-content: center;
-            padding: 20px;
+            padding: 15px;
             margin: 0;
             color: var(--dark);
         }
@@ -29,12 +29,12 @@
             background: white;
             width: 100%;
             max-width: 450px;
-            padding: 1.5rem;
+            padding: 1.2rem;
             border-radius: 30px;
             box-shadow: 0 10px 40px rgba(146, 180, 212, 0.1);
         }
 
-        h2 { text-align: center; margin: 0 0 20px 0; font-size: 1.2rem; letter-spacing: 1px; }
+        h2 { text-align: center; margin: 0 0 15px 0; font-size: 1.2rem; letter-spacing: 1px; }
 
         .settings-card {
             background: #ffffff;
@@ -44,60 +44,85 @@
             border: 1px solid #f0f0f0;
         }
 
+        /* 調整對齊邏輯 */
         .settings-row {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: flex-end; /* 底部對齊 */
         }
 
-        .input-item { display: flex; flex-direction: column; }
-        .item-people { width: 70px; } 
-        .item-time-select { flex: 1.2; }
-        .item-time-custom { flex: 1; }
-
-        label { font-size: 0.75rem; color: #a0aab0; margin-bottom: 5px; font-weight: bold; }
+        .input-item { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1; 
+        }
         
+        .item-people { flex: 0 0 70px; } /* 固定人數寬度 */
+
+        label { 
+            font-size: 0.7rem; 
+            color: #a0aab0; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            white-space: nowrap;
+        }
+        
+        /* 強制所有框框高度一致 */
         input, select {
-            padding: 10px;
+            width: 100%;
+            height: 42px; /* 固定高度 */
+            padding: 0 8px;
             border: 1.5px solid #eee;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 0.9rem;
             background: #fafafa;
-            height: 44px;
-            box-sizing: border-box;
             color: var(--dark);
+            box-sizing: border-box;
             outline: none;
+            /* 移除手機預設陰影與高度加成 */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
+
+        /* 針對時間框微調 */
+        input[type="time"] {
+            display: flex;
+            align-items: center;
+            line-height: 42px; /* 與高度相同 */
+        }
+
+        input:focus, select:focus { border-color: var(--primary); }
 
         .target-info {
             font-size: 0.85rem;
             color: #7a8d99;
             text-align: center;
-            padding: 12px;
+            padding: 10px;
             background: #f8fbfd;
-            border-radius: 15px;
+            border-radius: 12px;
             border: 1px solid #edf2f5;
         }
 
-        /* 碼表顯示 - 移除小時 */
         .display {
-            font-size: 4rem;
+            font-size: 3.8rem;
             font-family: 'Courier New', monospace;
             text-align: center;
             font-weight: 600;
-            margin: 20px 0;
+            margin: 15px 0;
             background: var(--timer-bg);
             color: var(--dark);
-            padding: 30px 10px;
+            padding: 25px 5px;
             border-radius: 25px;
+            overflow: hidden;
         }
 
         .main-controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         button {
@@ -124,7 +149,7 @@
         }
 
         .lap-item {
-            padding: 14px 10px;
+            padding: 12px 5px;
             border-bottom: 1px solid #fafafa;
             display: flex;
             justify-content: space-between;
@@ -132,11 +157,11 @@
         }
 
         .lap-left { flex: 1; }
-        .lap-no { font-size: 0.7rem; color: #c0c8cc; text-transform: uppercase; }
+        .lap-no { font-size: 0.7rem; color: #c0c8cc; }
         .lap-dur { font-weight: bold; font-size: 1.1rem; color: #66737c; }
         
-        .lap-right { text-align: right; flex: 2; }
-        .diff-text { font-size: 0.85rem; margin-bottom: 3px; }
+        .lap-right { text-align: right; flex: 1.5; }
+        .diff-text { font-size: 0.8rem; margin-bottom: 2px; }
         .faster { color: #8ebfa3; font-weight: bold; }
         .slower { color: #d9ad82; }
         
@@ -155,6 +180,7 @@
             font-size: 0.8rem;
             border: none;
             cursor: pointer;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -167,13 +193,13 @@
         <div class="settings-row">
             <div class="input-item item-people">
                 <label>人數</label>
-                <input type="number" id="peopleCount" value="5" min="1">
+                <input type="number" id="peopleCount" value="5" min="1" inputmode="numeric">
             </div>
-            <div class="input-item item-time-select">
+            <div class="input-item">
                 <label>結束快選</label>
                 <select id="endTimeSelect"></select>
             </div>
-            <div class="input-item item-time-custom">
+            <div class="input-item">
                 <label>微調</label>
                 <input type="time" id="endTimeCustom">
             </div>
@@ -181,11 +207,10 @@
         <div id="targetDisplay" class="target-info">設定目標以開始</div>
     </div>
 
-    <!-- 碼表顯示：只顯示 分:秒.毫秒 -->
     <div id="display" class="display">00:00.00</div>
 
     <div class="main-controls">
-        <button id="startBtn">開始服務</button>
+        <button id="startBtn">開始計時</button>
         <button id="lapBtn" disabled>完成一人</button>
     </div>
 
@@ -197,8 +222,8 @@
 </div>
 
 <script>
-    const praises = ["節奏真棒 ✨", "服務迅速 🚀", "完美達標 🏆", "效率驚人 🌟", "客戶很滿意喔 💖"];
-    const cheers = ["品質優先 🌿", "找回節奏 💪", "下一位會更快 🌈", "深呼吸加油 👏"];
+    const praises = ["表現優異 ✨", "節奏很棒 🚀", "完美達標 🏆", "效率驚人 🌟", "做得好 💖"];
+    const cheers = ["品質優先 🌿", "找回節奏 💪", "下一位加油 🌈", "專注當下 👏"];
 
     let startTime, elapsedTime = 0, timerInterval, lapCount = 0, targetMsPerPerson = 0;
 
@@ -229,10 +254,9 @@
         if (diff < 0) { targetDisplay.innerHTML = "<span style='color:#e59a9a;'>⚠️ 時間已過</span>"; startBtn.disabled = true; return; }
         startBtn.disabled = false;
         targetMsPerPerson = diff / p;
-        targetDisplay.innerHTML = `平均每人目標：${formatTime(targetMsPerPerson)}`;
+        targetDisplay.innerHTML = `每位目標：${formatTime(targetMsPerPerson)}`;
     }
 
-    // 格式化時間：移除小時，顯示 MM:SS.ms
     function formatTime(t) {
         const mm = Math.floor(t / 60000);
         const ss = Math.floor((t % 60000) / 1000);
@@ -256,7 +280,7 @@
 
     lapBtn.onclick = () => {
         lapCount++;
-        const duration = elapsedTime; // 因為每次都重置，所以當前時間就是這客人的時間
+        const duration = elapsedTime;
         const diff = duration - targetMsPerPerson;
         const isFaster = diff <= 0;
         const msg = isFaster ? praises[Math.floor(Math.random()*praises.length)] : cheers[Math.floor(Math.random()*cheers.length)];
@@ -264,23 +288,20 @@
         const item = document.createElement('div');
         item.className = 'lap-item';
         item.innerHTML = `
-            <div class="lap-left"><span class="lap-no">第 ${lapCount} 人</span><span class="lap-dur">${formatTime(duration)}</span></div>
+            <div class="lap-left"><span class="lap-no">P ${lapCount}</span><br><span class="lap-dur">${formatTime(duration)}</span></div>
             <div class="lap-right">
-                <div class="diff-text ${isFaster?'faster':'slower'}">${isFaster?'超前':'落後'} ${formatTime(Math.abs(diff))}</div>
+                <div class="diff-text ${isFaster?'faster':'slower'}">${isFaster?'領先':'遲於'} ${formatTime(Math.abs(diff))}</div>
                 <div class="praise-text ${isFaster?'praise-success':'praise-cheer'}">${msg}</div>
             </div>`;
         lapsContainer.prepend(item); 
-        
-        // 重置碼表並立即開始下一位
-        startTime = Date.now();
-        elapsedTime = 0;
+        startTime = Date.now(); elapsedTime = 0;
     };
 
     resetBtn.onclick = () => {
-        if (confirm("確定要重設嗎？紀錄將會清除。")) {
+        if (confirm("確定重設？紀錄將清除。")) {
             clearInterval(timerInterval); elapsedTime = lapCount = 0;
             display.innerText = "00:00.00"; lapsContainer.innerHTML = '';
-            startBtn.innerText = "開始服務"; startBtn.style.backgroundColor = "var(--success)";
+            startBtn.innerText = "開始計時"; startBtn.style.backgroundColor = "var(--success)";
             lapBtn.disabled = true; peopleInput.disabled = endTimeSelect.disabled = endTimeCustom.disabled = false;
             updateTarget();
         }
